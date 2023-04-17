@@ -17,6 +17,41 @@ class HomeViewController: BaseViewController, UITableViewDelegate, UITableViewDa
 
         initViews()
     }
+    
+    func refreshTableView(contacts: [Contact]) {
+        self.items = contacts
+        self.tableView.reloadData()
+    }
+    
+    func apiContactList() {
+        showProgress()
+        
+        AFHttp.get(url: AFHttp.API_CONTACT_LIST, params: AFHttp.paramsEmpty(), handler: { response in
+            self.hideProgress()
+            switch response.result {
+            case .success:
+                let contacts = try! JSONDecoder().decode([Contact].self, from: response.data!)
+                self.refreshTableView(contacts: contacts)
+            case let .failure(error):
+                print(error)
+            }
+        })
+    }
+    
+    func apiContactDelete(contact: Contact) {
+        showProgress()
+        
+        AFHttp.del(url: AFHttp.API_CONTACT_DELETE + contact.id!, params: AFHttp.paramsEmpty(), handler: { response in
+            self.hideProgress()
+            switch response.result {
+            case .success:
+                print(response.result)
+                self.apiContactList()
+            case let .failure(error):
+                print(error)
+            }
+        })
+    }
 
     // MARK: - Method
     
@@ -25,9 +60,7 @@ class HomeViewController: BaseViewController, UITableViewDelegate, UITableViewDa
         tableView.delegate = self
         
         initNavigation()
-        
-        items.append(Contact(name: "Bekhruz", phone: "+998930827444"))
-        items.append(Contact(name: "Bekzod", phone: "+998886864444"))
+        apiContactList()
     }
     
     func initNavigation() {
@@ -44,8 +77,9 @@ class HomeViewController: BaseViewController, UITableViewDelegate, UITableViewDa
         self.navigationController?.pushViewController(vc, animated: true)
     }
     
-    func callEditViewController() {
+    func callEditViewController(contact: Contact) {
         let vc = EditViewController(nibName: "EditViewController", bundle: nil)
+        vc.contact = contact
         let nc = UINavigationController(rootViewController: vc)
         self.present(nc, animated: true)
     }
@@ -53,7 +87,7 @@ class HomeViewController: BaseViewController, UITableViewDelegate, UITableViewDa
     // MARK: - Action
     
     @objc func leftTapped() {
-        
+        apiContactList()
     }
     
     @objc func rightTapped() {
@@ -91,6 +125,7 @@ class HomeViewController: BaseViewController, UITableViewDelegate, UITableViewDa
         return UIContextualAction(style: .destructive, title: "Delete") { (action, swipeButtonView, completion) in
             print("DELETE HERE")
             
+            self.apiContactDelete(contact: contact)
             completion(true)
         }
     }
@@ -98,7 +133,7 @@ class HomeViewController: BaseViewController, UITableViewDelegate, UITableViewDa
     private func makeCompleteContextualAction(forRowAt indexPath: IndexPath, contact: Contact) -> UIContextualAction{
         return UIContextualAction(style: .normal, title: "Edit") { (action, swipeButtonView, completion) in
             print("COMPLETE HERE")
-            self.callEditViewController()
+            self.callEditViewController(contact: contact)
             completion(true)
         }
     }

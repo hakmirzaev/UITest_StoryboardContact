@@ -9,21 +9,38 @@ import UIKit
 
 class EditViewController: BaseViewController {
 
+    var contact: Contact = Contact(name: "", phone: "")
+    @IBOutlet weak var nameLabel: UITextField!
+    @IBOutlet weak var phoneLabel: UITextField!
     override func viewDidLoad() {
         super.viewDidLoad()
 
-        // Do any additional setup after loading the view.
+        initView()
+    }
+    
+    func initView() {
+        nameLabel.text = contact.name!
+        phoneLabel.text = contact.phone!
+        
+        title = "Edit Contact"
     }
 
-
-    /*
-    // MARK: - Navigation
-
-    // In a storyboard-based application, you will often want to do a little preparation before navigation
-    override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
-        // Get the new view controller using segue.destination.
-        // Pass the selected object to the new view controller.
+    @IBAction func saveButton(_ sender: Any) {
+        if nameLabel.text != nil && phoneLabel.text != nil {
+            showProgress()
+            AFHttp.put(url: AFHttp.API_CONTACT_UPDATE + (contact.id)!, params: AFHttp.paramsContactCreate(contact: Contact(name: nameLabel.text!, phone: phoneLabel.text!)), handler: { response in
+                self.hideProgress()
+                switch response.result {
+                case .success:
+                    print(response.result)
+                case let .failure(error):
+                    print(error)
+                }
+            })
+        }
+        
+        dismiss(animated: true, completion: nil)
     }
-    */
+    
 
 }
